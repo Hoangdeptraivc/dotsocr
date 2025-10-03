@@ -38,9 +38,18 @@ def inference(image_path, prompt, model, processor):
         return_tensors="pt",
     )
 
-    inputs = inputs.to("cuda")
-
+    
+    
+    inputs = inputs.to("cuda",dtype=torch.float16)
+    print("Input dtypes:", {k: v.dtype for k,v in inputs.items() if isinstance(v, torch.Tensor)})
+    print("Model dtype:", next(model.parameters()).dtype)
+    for name, module in model.named_modules():
+        if isinstance(module, torch.nn.Conv2d):
+            print(f"{name}: weight dtype = {module.weight.dtype}, bias dtype = {module.bias.dtype}")
     # Inference: Generation of the output
+
+
+
     generated_ids = model.generate(**inputs, max_new_tokens=24000)
     generated_ids_trimmed = [
         out_ids[len(in_ids) :] for in_ids, out_ids in zip(inputs.input_ids, generated_ids)
@@ -57,11 +66,13 @@ if __name__ == "__main__":
     model_path = "./weights/DotsOCR"
     model = AutoModelForCausalLM.from_pretrained(
         model_path,
-        attn_implementation="flash_attention_2",
-        torch_dtype=torch.bfloat16,
-        device_map="auto",
-        trust_remote_code=True
+        attn_implementation="sdpa",
+        torch_dtype=torch.float16,
+        device_map={"":0},
+        trust_remote_code=True,
+        local_files_only =True
     )
+    
     processor = AutoProcessor.from_pretrained(model_path,  trust_remote_code=True)
 
     image_path = "demo/demo_image1.jpg"

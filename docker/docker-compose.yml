@@ -2,13 +2,13 @@ version: '3.8'
 
 services:
   dots-ocr-server:
-    image: dots-ocr:latest
+    image: rednotehilab/dots.ocr:vllm-openai-v0.9.1
     container_name: dots-ocr-container
     ports:
       - "8000:8000"
     volumes:
       #download model to local，model url：https://www.modelscope.cn/models/rednote-hilab/dots.ocr
-      - ./model/dots.ocr:/workspace/weights/DotsOCR
+       - ../weights/DotsOCR:/workspace/weights/DotsOCR
     environment:
       - PYTHONPATH=/workspace/weights:$PYTHONPATH
     deploy:
@@ -38,6 +38,7 @@ services:
             --chat-template-content-format string \
             --served-model-name dotsocr-model \
             --trust-remote-code
+            --attn-impl eager
 
 
 
